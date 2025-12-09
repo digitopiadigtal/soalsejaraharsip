@@ -9,58 +9,147 @@
 <body>
 
   <div class="container">
-    <h1>Latihan Soal: Sejarah Kearsipan</h1>
-    <div id="quiz-container"></div>
-    <button id="next-btn" onclick="nextQuestion()">Soal Selanjutnya</button>
+    <header>
+      <h1>Latihan Soal</h1>
+      <p class="subtitle">Mata Kuliah: Sejarah Kearsipan</p>
+      <p id="progress-text"></p>
+    </header>
+
+    <main id="quiz-container"></main>
+
+    <div class="bottom-bar">
+      <button id="next-btn" onclick="nextQuestion()">Soal Selanjutnya</button>
+    </div>
   </div>
 
   <script src="questions.js"></script>
   <script>
     let currentIndex = 0;
+    let correctCount = 0;
+    let answered = false;
+
+    function updateProgress() {
+      const progressText = document.getElementById("progress-text");
+      progressText.textContent = `Soal ${currentIndex + 1} dari ${questions.length}`;
+    }
 
     function loadQuestion() {
       const q = questions[currentIndex];
       const container = document.getElementById("quiz-container");
 
+      answered = false;
+
       container.innerHTML = `
-        <h2>${currentIndex + 1}. ${q.question}</h2>
-        <ul>
-          ${q.options.map((opt, i) => `
-            <li>
-              <button onclick="checkAnswer(${i})">${opt}</button>
-            </li>
-          `).join("")}
-        </ul>
-        <p id="feedback"></p>
+        <section class="question-card">
+          <h2 class="question-text">${currentIndex + 1}. ${q.question}</h2>
+          <ul class="options-list">
+            ${q.options
+              .map(
+                (opt, i) => `
+              <li>
+                <button class="option-btn" onclick="checkAnswer(${i})">
+                  ${String.fromCharCode(65 + i)}. ${opt}
+                </button>
+              </li>
+            `
+              )
+              .join("")}
+          </ul>
+          <p id="feedback" class="feedback"></p>
+        </section>
       `;
+
+      updateProgress();
     }
 
     function checkAnswer(selected) {
+      if (answered) return; // biar ga dobel klik
+
+      answered = true;
       const q = questions[currentIndex];
       const feedback = document.getElementById("feedback");
 
+      const optionButtons = document.querySelectorAll(".option-btn");
+      optionButtons.forEach((btn, index) => {
+        btn.disabled = true;
+        if (index === q.answer) {
+          btn.classList.add("correct-btn");
+        }
+        if (index === selected && selected !== q.answer) {
+          btn.classList.add("wrong-btn");
+        }
+      });
+
       if (selected === q.answer) {
-        feedback.innerHTML = `<span class="correct">Mantap jiwa! Jawaban lu bener bro 😎</span>`;
+        correctCount++;
+        feedback.innerHTML =
+          `<span class="correct-text">Mantap jiwa, Bu Syafira! Jawaban Ibu benar 😎</span>`;
       } else {
-        feedback.innerHTML = `<span class="wrong">Lu salah kocak 😂<br>Yang bener: <b>${q.options[q.answer]}</b><br><i>${q.explanation}</i></span>`;
+        feedback.innerHTML =
+          `<span class="wrong-text">
+            Lu salah kocak, Bu 😂<br>
+            Jawaban yang benar: <b>${q.options[q.answer]}</b><br>
+            <i>${q.explanation}</i>
+          </span>`;
       }
     }
 
+    function showResult() {
+      const container = document.getElementById("quiz-container");
+      const score = Math.round((correctCount / questions.length) * 100);
+
+      let message = "";
+      if (score < 70) {
+        message = `
+          Belajar lagi ya, Bu 😭<br>
+          Sedikit lagi pasti bisa lebih jago. Jangan menyerah, arsip menanti kejayaan Bu Syafira!
+        `;
+      } else {
+        message = `
+          Keren banget Bu Syafira! 🤩<br>
+          Nilai Ibu bikin dosen bangga, arsip pun bergetar melihat ketelatenan Ibu.
+        `;
+      }
+
+      container.innerHTML = `
+        <section class="result-card">
+          <h2>🎉 Latihan Selesai</h2>
+          <p>Jawaban benar: <b>${correctCount}</b> dari <b>${questions.length}</b> soal.</p>
+          <p class="score-text">Nilai Ibu: <span class="score-number">${score}</span></p>
+          <p class="result-message">${message}</p>
+          <button class="retry-btn" onclick="restartQuiz()">Ulangi Latihan</button>
+        </section>
+      `;
+
+      document.getElementById("progress-text").textContent = "Hasil Akhir";
+      document.getElementById("next-btn").style.display = "none";
+    }
+
     function nextQuestion() {
+      // Paksa pilih jawaban dulu sebelum next
+      if (!answered) {
+        alert("Jawab dulu satu opsi ya, Bu 😄");
+        return;
+      }
+
       if (currentIndex < questions.length - 1) {
         currentIndex++;
         loadQuestion();
       } else {
-        document.getElementById("quiz-container").innerHTML = `
-          <h2>🎉 Latihan selesai bro!</h2>
-          <p>Lu hebat juga, lanjut materi lain gih 😎🔥</p>
-        `;
-        document.getElementById("next-btn").style.display = "none";
+        showResult();
       }
     }
 
+    function restartQuiz() {
+      currentIndex = 0;
+      correctCount = 0;
+      answered = false;
+      document.getElementById("next-btn").style.display = "inline-block";
+      loadQuestion();
+    }
+
+    // load soal pertama
     loadQuestion();
   </script>
-
 </body>
 </html>
